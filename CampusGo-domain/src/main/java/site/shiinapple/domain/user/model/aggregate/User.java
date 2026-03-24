@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
+import site.shiinapple.domain.user.model.valobj.UserVO;
 
 import java.util.UUID;
 

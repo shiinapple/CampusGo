@@ -14,6 +14,10 @@ thread:
 
 # 数据库配置；启动时配置数据库资源信息
 spring:
+  data:
+    redis:
+      host: localhost
+      port: 6379
   datasource:
     username: root
     password: 123456
@@ -29,6 +33,9 @@ spring:
       max-lifetime: 1800000 #此属性控制池中连接的最长生命周期，值0表示无限生命周期，默认1800000即30分钟
       connection-timeout: 30000 #数据库连接超时时间,默认30秒，即30000
       connection-test-query: SELECT 1
+
+
+
 
 # MyBatis 配置
 #mybatis:

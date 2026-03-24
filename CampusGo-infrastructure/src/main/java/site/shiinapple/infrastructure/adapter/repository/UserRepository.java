@@ -1,5 +1,6 @@
 package site.shiinapple.infrastructure.adapter.repository;
 
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 import site.shiinapple.domain.user.adapter.repository.IUserRepository;
@@ -54,4 +55,24 @@ public class UserRepository implements IUserRepository {
         }
     }
 
+    @Override
+    public User queryUserByUserId(String userId) {
+        System.out.println("DEBUG: 开始查询数据库，传入的 userId 是 -> [" + userId + "]");
+        UserPO userPO = userDao.queryUserByUserId(userId);
+        System.out.println("1. [Repository层] 从数据库查到的 PO: " + userPO.getDisplayName());
+        if (userPO == null) {
+            return null;
+        }
+
+        return User.builder()
+                .userId(userPO.getUserId())
+                .openId(userPO.getOpenId())
+                .displayName(userPO.getDisplayName())
+                .avatarUrl(userPO.getAvatarUrl())
+                .phone(userPO.getPhone())
+                .wechatId(userPO.getWechatId())
+                // 注意：如果 PO 里 verified 是 Integer(0或1)，这里要判断 == 1；如果是 boolean，直接传
+                .verified(userPO.getVerified() != null && userPO.getVerified() == 1)
+                .build();
+    }
 }

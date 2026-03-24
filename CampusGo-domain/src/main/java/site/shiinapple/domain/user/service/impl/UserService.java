@@ -1,6 +1,7 @@
 package site.shiinapple.domain.user.service.impl;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import site.shiinapple.domain.user.adapter.repository.IUserRepository;
@@ -36,6 +37,24 @@ public class UserService implements IUserService {
                 .phone(user.getPhone())
                 .avatarUrl(user.getAvatarUrl())
                 .verified(user.isVerified())
+                .build();
+    }
+
+    @Override
+    public UserVO get(String userId) {
+        UserVO userVO = new UserVO();
+
+        User user = userRepository.queryUserByUserId(userId);
+        System.out.println("2. [Service层] 聚合根里的名字: " + user.getDisplayName());
+
+        return UserVO.builder()
+                .userId(user.getUserId())
+                .openId(user.getOpenId())
+                .displayName(user.getDisplayName())
+                .avatarUrl(user.getAvatarUrl())
+                .phone(user.getPhone())
+                .wechatId(user.getWechatId())
+                .verified(user.isVerified()) // boolean 类型的 getter 是 isXxx()
                 .build();
     }
 

@@ -11,4 +11,6 @@ public interface IUserService {
      */
     UserVO login(String code);
 
+    UserVO get(String userId);
+
 }

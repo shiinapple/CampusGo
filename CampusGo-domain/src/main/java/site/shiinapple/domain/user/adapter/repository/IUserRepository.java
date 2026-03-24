@@ -8,4 +8,6 @@ public interface IUserRepository {
 
     void save(User user);
 
+    User queryUserByUserId(String userId);
+
 }
