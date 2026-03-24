@@ -1,12 +1,5 @@
 package site.shiinapple.types.enums;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-
-@AllArgsConstructor
-@NoArgsConstructor
-@Getter
 public enum ResponseCode {
 
     /**
@@ -30,4 +23,16 @@ public enum ResponseCode {
     private String code;
     private String info;
 
+    ResponseCode(String code, String info) {
+        this.code = code;
+        this.info = info;
+    }
+
+    public String getCode() {
+        return code;
+    }
+
+    public String getInfo() {
+        return info;
+    }
 }

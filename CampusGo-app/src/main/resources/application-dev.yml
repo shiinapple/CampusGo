@@ -40,3 +40,8 @@ logging:
   level:
     root: info
   config: classpath:logback-spring.xml
+
+wx:
+  miniapp:
+    appid: wx8a230e54e94a1760
+    secret: fbc48ca8abdf5487f0f71ddf1d062d4a
