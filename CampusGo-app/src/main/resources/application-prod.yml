@@ -18,10 +18,9 @@ spring:
     username: ${SPRING_DATASOURCE_USERNAME:root}
     password: ${SPRING_DATASOURCE_PASSWORD:123456}
     # 生产环境使用服务器真实 IP
-    url: jdbc:mysql://${SPRING_DATASOURCE_HOST:49.233.32.212}:${SPRING_DATASOURCE_PORT:3306}/xfg_frame_archetype?useUnicode=true&characterEncoding=utf8&autoReconnect=true&zeroDateTimeBehavior=convertToNull&serverTimezone=UTC&useSSL=false
+    url: jdbc:mysql://mysql:3306/xfg_frame_archetype?useUnicode=true&characterEncoding=utf8&autoReconnect=true&zeroDateTimeBehavior=convertToNull&serverTimezone=UTC&useSSL=false
     driver-class-name: com.mysql.cj.jdbc.Driver
-    type: com.zaxxer.hikari.HikariDataSource
-    hikari:
+    type:
       pool-name: CampusGo_HikariCP
       minimum-idle: 5
       idle-timeout: 180000

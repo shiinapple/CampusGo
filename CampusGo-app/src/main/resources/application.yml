@@ -2,4 +2,4 @@ spring:
   config:
     name: CampusGo-app
   profiles:
-    active: dev
+    active: prod

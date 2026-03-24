@@ -1,0 +1,96 @@
+package site.shiinapple.trigger.http;
+
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.util.StringUtils;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
+import com.alibaba.fastjson2.JSONObject;
+import site.shiinapple.api.dto.LoginRequest;
+import site.shiinapple.api.dto.LoginResponse;
+import site.shiinapple.api.dto.UserDTO;
+import site.shiinapple.domain.user.model.valobj.UserVO;
+import site.shiinapple.domain.user.service.IUserService;
+import site.shiinapple.types.model.Result;
+
+import java.util.UUID; // 如果你有真实的Token生成工具类，替换掉这个
+
+/**
+ * 用户控制器
+ */
+@Slf4j
+@RestController
+@RequestMapping("/v1")
+public class UserController {
+
+    @Autowired
+    private IUserService userService;
+    @Value("${wx.miniapp.appid:}")
+    private String wxAppId;
+    @Value("${wx.miniapp.secret:}")
+    private String wxSecret;
+
+    /**
+     * 用户登录/注册接口
+     * @param request 包含微信 code
+     * @return Result<LoginResponse> 包含 token 和用户信息
+     */
+    @PostMapping("/auth/login")
+    public Result<LoginResponse> login(@RequestBody LoginRequest request) {
+        String code = request.getCode();
+
+        try {
+            if (!StringUtils.hasText(code)) {
+                return Result.fail(40001, "code不能为空");
+            }
+            if (!StringUtils.hasText(wxAppId) || !StringUtils.hasText(wxSecret)) {
+                return Result.fail(40001, "微信配置缺失");
+            }
+            String url = UriComponentsBuilder.fromHttpUrl("https://api.weixin.qq.com/sns/jscode2session")
+                    .queryParam("appid", wxAppId)
+                    .queryParam("secret", wxSecret)
+                    .queryParam("js_code", code)
+                    .queryParam("grant_type", "authorization_code")
+                    .toUriString();
+            String body = new RestTemplate().getForObject(url, String.class);
+            JSONObject json = JSONObject.parseObject(body);
+            String openId = json == null ? null : json.getString("openid");
+            String unionId = json == null ? null : json.getString("unionid");
+            String sessionKey = json == null ? null : json.getString("session_key");
+            Integer errCode = json == null ? null : json.getInteger("errcode");
+            String errMsg = json == null ? null : json.getString("errmsg");
+            if (errCode != null && errCode != 0) {
+                return Result.fail(40001, "微信登录失败:" + errMsg);
+            }
+            if (!StringUtils.hasText(openId)) {
+                return Result.fail(40001, "微信登录失败: openid为空");
+            }
+            log.info("微信登录换取成功, openId:{}, unionId:{}, sessionKeyExists:{}", openId, unionId, StringUtils.hasText(sessionKey));
+
+            UserVO userVO = userService.login(openId);
+
+            UserDTO userDTO = UserDTO.builder()
+                    .userId(userVO.getUserId())
+                    .displayName(userVO.getDisplayName())
+                    .avatarUrl(userVO.getAvatarUrl())
+                    .phone(userVO.getPhone())
+                    .wechatId(userVO.getWechatId())
+                    .verified(userVO.isVerified())
+                    .build();
+
+            String token = "jwt_" + UUID.randomUUID().toString().replace("-", "");
+
+            LoginResponse response = LoginResponse.builder()
+                    .token(token)
+                    .user(userDTO)
+                    .build();
+
+            return Result.success(response);
+        } catch (Exception e) {
+            log.error("用户登录失败, code: {}", code, e);
+            return Result.fail(40001, "登录失败: " + e.getMessage());
+        }
+    }
+}

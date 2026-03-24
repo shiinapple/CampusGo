@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="site.shiinapple.infrastructure.dao.IUserDao">
+
+    <resultMap id="UserMap" type="site.shiinapple.infrastructure.dao.po.UserPO">
+        <id column="id" property="id"/>
+        <result column="user_id" property="userId"/>
+        <result column="open_id" property="openId"/>
+        <result column="display_name" property="displayName"/>
+        <result column="wechat_id" property="wechatId"/>
+        <result column="phone" property="phone"/>
+        <result column="avatar_url" property="avatarUrl"/>
+        <result column="verified" property="verified"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <insert id="insert" parameterType="site.shiinapple.infrastructure.dao.po.UserPO">
+        INSERT INTO user(user_id, open_id, display_name, wechat_id, phone, avatar_url, verified, create_time, update_time)
+        VALUES(#{userId}, #{openId}, #{displayName}, #{wechatId}, #{phone}, #{avatarUrl}, #{verified}, NOW(), NOW())
+    </insert>
+
+    <update id="update" parameterType="site.shiinapple.infrastructure.dao.po.UserPO">
+        UPDATE user
+        SET display_name = #{displayName},
+            wechat_id = #{wechatId},
+            phone = #{phone},
+            avatar_url = #{avatarUrl},
+            verified = #{verified},
+            update_time = NOW()
+        WHERE user_id = #{userId}
+    </update>
+
+    <select id="queryUserByOpenId" parameterType="java.lang.String" resultMap="UserMap">
+        SELECT id, user_id, open_id, display_name, wechat_id, phone, avatar_url, verified, create_time, update_time
+        FROM user
+        WHERE open_id = #{openId}
+    </select>
+
+    <select id="queryUserByUserId" parameterType="java.lang.String" resultMap="UserMap">
+        SELECT id, user_id, open_id, display_name, wechat_id, phone, avatar_url, verified, create_time, update_time
+        FROM user
+        WHERE user_id = #{userId}
+    </select>
+
+</mapper>
