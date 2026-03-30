@@ -23,3 +23,35 @@ CREATE TABLE `user` (
   UNIQUE KEY `idx_user_id` (`user_id`),
   UNIQUE KEY `idx_open_id` (`open_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户信息表';
+
+
+-- ----------------------------
+-- Table structure for order
+-- ----------------------------
+DROP TABLE IF EXISTS `order`;
+CREATE TABLE `order` (
+                         `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT COMMENT '自增ID',
+                         `order_id` varchar(64) NOT NULL COMMENT '订单唯一标识',
+                         `type` varchar(32) NOT NULL COMMENT '订单类型 (快递, 外卖)',
+                         `status` varchar(32) NOT NULL DEFAULT 'new' COMMENT '订单状态 (new:待抢单, grabbed:已抢单, completed:已完成)',
+                         `reward` decimal(10, 2) NOT NULL DEFAULT '0.00' COMMENT '赏金',
+                         `time_limit` varchar(64) DEFAULT NULL COMMENT '时间限制 (如:30分钟)',
+                         `pickup_location` varchar(256) DEFAULT NULL COMMENT '取货地点',
+                         `dropoff_location` varchar(256) DEFAULT NULL COMMENT '送货地点',
+                         `remarks` text DEFAULT NULL COMMENT '备注信息',
+                         `creator_user_id` varchar(64) NOT NULL COMMENT '发单人ID',
+                         `taker_user_id` varchar(64) DEFAULT NULL COMMENT '抢单人ID',
+                         `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+                         `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+                         PRIMARY KEY (`id`),
+                         UNIQUE KEY `idx_order_id` (`order_id`),
+                         KEY `idx_type_status` (`type`, `status`),
+                         KEY `idx_creator_user_id` (`creator_user_id`),
+                         KEY `idx_taker_user_id` (`taker_user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='订单信息表';
+
+-- ----------------------------
+-- 测试数据 (可选)
+-- ----------------------------
+INSERT INTO `order` (`order_id`, `type`, `status`, `reward`, `time_limit`, `pickup_location`, `dropoff_location`, `remarks`, `creator_user_id`)
+VALUES ('O1001', '快递', 'new', 2.00, '30分钟', '学子超市', '图书馆', '取件码 1234', 'system');

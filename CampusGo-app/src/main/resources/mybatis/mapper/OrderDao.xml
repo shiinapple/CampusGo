@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="site.shiinapple.infrastructure.dao.IOrderDao">
+
+    <resultMap id="OrderMap" type="site.shiinapple.infrastructure.dao.po.OrderPO">
+        <id column="id" property="id"/>
+        <result column="order_id" property="orderId"/>
+        <result column="type" property="type"/>
+        <result column="status" property="status"/>
+        <result column="reward" property="reward"/>
+        <result column="time_limit" property="timeLimit"/>
+        <result column="pickup_location" property="pickupLocation"/>
+        <result column="dropoff_location" property="dropoffLocation"/>
+        <result column="remarks" property="remarks"/>
+        <result column="creator_user_id" property="creatorUserId"/>
+        <result column="taker_user_id" property="takerUserId"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <insert id="insert" parameterType="site.shiinapple.infrastructure.dao.po.OrderPO">
+        INSERT INTO `order`(order_id, type, status, reward, time_limit, pickup_location, dropoff_location, remarks, creator_user_id, taker_user_id, create_time, update_time)
+        VALUES(#{orderId}, #{type}, #{status}, #{reward}, #{timeLimit}, #{pickupLocation}, #{dropoffLocation}, #{remarks}, #{creatorUserId}, #{takerUserId}, NOW(), NOW())
+    </insert>
+
+    <update id="update" parameterType="site.shiinapple.infrastructure.dao.po.OrderPO">
+        UPDATE `order`
+        SET status = #{status},
+            taker_user_id = #{takerUserId},
+            update_time = NOW()
+        WHERE order_id = #{orderId}
+    </update>
+
+    <select id="queryOrderById" parameterType="java.lang.String" resultMap="OrderMap">
+        SELECT id, order_id, type, status, reward, time_limit, pickup_location, dropoff_location, remarks, creator_user_id, taker_user_id, create_time, update_time
+        FROM `order`
+        WHERE order_id = #{orderId}
+    </select>
+
+    <select id="queryOrderList" resultMap="OrderMap">
+        SELECT id, order_id, type, status, reward, time_limit, pickup_location, dropoff_location, remarks, creator_user_id, taker_user_id, create_time, update_time
+        FROM `order`
+        <where>
+            <if test="type != null and type != ''">
+                AND type = #{type}
+            </if>
+        </where>
+        <choose>
+            <when test="sort == 'reward'">
+                ORDER BY reward ASC
+            </when>
+            <when test="sort == '-reward'">
+                ORDER BY reward DESC
+            </when>
+            <otherwise>
+                ORDER BY create_time DESC
+            </otherwise>
+        </choose>
+        LIMIT #{offset}, #{limit}
+    </select>
+
+    <select id="queryOrderCount" resultType="java.lang.Long">
+        SELECT COUNT(1)
+        FROM `order`
+        <where>
+            <if test="type != null and type != ''">
+                AND type = #{type}
+            </if>
+        </where>
+    </select>
+
+</mapper>
