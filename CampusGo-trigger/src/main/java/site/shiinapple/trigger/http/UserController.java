@@ -303,4 +303,31 @@ public class UserController {
             return Result.fail(40001, "上传失败: " + e.getMessage());
         }
     }
+
+    /**
+     * 校园认证接口
+     */
+    @PostMapping("/verify/submit")
+    public Result<Map<String, Object>> verifySubmit(@RequestHeader(value = "Authorization") String token, @RequestParam("file") MultipartFile file) {
+        try {
+            // 1. 权限校验
+            String redisKey = AUTH_TOKEN_PREFIX + token;
+            String userId = redisTemplate.opsForValue().get(redisKey);
+            if (!StringUtils.hasText(userId)) {
+                return Result.unLogin();
+            }
+
+            // 2. 模拟保存证件逻辑 (这里可以复用之前的图片压缩逻辑，暂简化为自动通过)
+            UserVO userVO = UserVO.builder().verified(true).build();
+            userService.update(userId, userVO);
+
+            Map<String, Object> result = new HashMap<>();
+            result.put("verified", true);
+            result.put("status", "approved");
+            return Result.success(result);
+        } catch (Exception e) {
+            log.error("校园认证提交失败", e);
+            return Result.fail(40001, "提交失败: " + e.getMessage());
+        }
+    }
 }
