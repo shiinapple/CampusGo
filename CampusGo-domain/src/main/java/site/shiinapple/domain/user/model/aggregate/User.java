@@ -5,7 +5,6 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
-import site.shiinapple.domain.user.model.valobj.UserVO;
 
 import java.util.UUID;
 
@@ -49,12 +48,18 @@ public class User {
     /**
      * 更新基础资料
      */
-    public void updateProfile(String displayName, String avatarUrl) {
+    public void updateProfile(String displayName, String avatarUrl, String wechatId, String phone) {
         if (StringUtils.isNotBlank(displayName)) {
             this.displayName = displayName;
         }
         if (StringUtils.isNotBlank(avatarUrl)) {
             this.avatarUrl = avatarUrl;
+        }
+        if (StringUtils.isNotBlank(wechatId)) {
+            this.wechatId = wechatId;
+        }
+        if (StringUtils.isNotBlank(phone)) {
+            this.phone = phone;
         }
     }
 

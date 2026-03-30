@@ -1,6 +1,9 @@
 # 基础镜像，可以先执行 docker pull openjdk:17-jdk-slim
 FROM openjdk:17-jdk-slim
 
+# 安装 AWT 需要的图形库 (用于图片压缩处理)
+RUN apt-get update && apt-get install -y libfreetype6 fontconfig && rm -rf /var/lib/apt/lists/*
+
 # 作者
 MAINTAINER xiaofuge
 

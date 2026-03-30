@@ -1,7 +1,6 @@
 package site.shiinapple.domain.user.service.impl;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import site.shiinapple.domain.user.adapter.repository.IUserRepository;
@@ -42,11 +41,10 @@ public class UserService implements IUserService {
 
     @Override
     public UserVO get(String userId) {
-        UserVO userVO = new UserVO();
-
         User user = userRepository.queryUserByUserId(userId);
-        System.out.println("2. [Service层] 聚合根里的名字: " + user.getDisplayName());
-
+        if (user == null) {
+            return null;
+        }
         return UserVO.builder()
                 .userId(user.getUserId())
                 .openId(user.getOpenId())
@@ -54,7 +52,34 @@ public class UserService implements IUserService {
                 .avatarUrl(user.getAvatarUrl())
                 .phone(user.getPhone())
                 .wechatId(user.getWechatId())
-                .verified(user.isVerified()) // boolean 类型的 getter 是 isXxx()
+                .verified(user.isVerified())
+                .build();
+    }
+
+    @Override
+    public UserVO update(String userId, UserVO userVO) {
+        // 1. 获取现有用户信息
+        User user = userRepository.queryUserByUserId(userId);
+        if (user == null) {
+            log.error("用户不存在, userId: {}", userId);
+            throw new RuntimeException("用户不存在");
+        }
+
+        // 2. 更新资料
+        user.updateProfile(userVO.getDisplayName(), userVO.getAvatarUrl(), userVO.getWechatId(), userVO.getPhone());
+
+        // 3. 保存更新后的用户
+        userRepository.save(user);
+
+        // 4. 返回更新后的 UserVO
+        return UserVO.builder()
+                .userId(user.getUserId())
+                .openId(user.getOpenId())
+                .displayName(user.getDisplayName())
+                .avatarUrl(user.getAvatarUrl())
+                .phone(user.getPhone())
+                .wechatId(user.getWechatId())
+                .verified(user.isVerified())
                 .build();
     }
 

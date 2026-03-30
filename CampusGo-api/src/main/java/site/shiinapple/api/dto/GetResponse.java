@@ -7,6 +7,9 @@ import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 
+/**
+ * 获取用户信息响应 DTO
+ */
 @Data
 @Builder
 @AllArgsConstructor

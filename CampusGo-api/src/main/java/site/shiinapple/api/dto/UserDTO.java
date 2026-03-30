@@ -14,6 +14,7 @@ import java.io.Serializable;
 @NoArgsConstructor
 public class UserDTO implements Serializable {
     private static final long serialVersionUID = 1L;
+    @JsonProperty("id")
     private String userId;
     private String displayName;
     private String avatarUrl;

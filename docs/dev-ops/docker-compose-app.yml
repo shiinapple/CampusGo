@@ -13,7 +13,7 @@ services:
       - TZ=PRC
       - SERVER_PORT=8091
     volumes:
-      - ./log:/data/log
+      - ./data:/data
     logging:
       driver: "json-file"
       options:

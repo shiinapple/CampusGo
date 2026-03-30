@@ -1,23 +1,36 @@
 package site.shiinapple.trigger.http;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 import com.alibaba.fastjson2.JSONObject;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.web.multipart.MultipartFile;
 import site.shiinapple.api.dto.GetResponse;
 import site.shiinapple.api.dto.LoginRequest;
 import site.shiinapple.api.dto.LoginResponse;
 import site.shiinapple.api.dto.UserDTO;
+import site.shiinapple.api.dto.UserUpdateRequest;
 import site.shiinapple.domain.user.model.valobj.UserVO;
 import site.shiinapple.domain.user.service.IUserService;
 import site.shiinapple.types.model.Result;
 
+import javax.imageio.IIOImage;
+import javax.imageio.ImageIO;
+import javax.imageio.ImageWriteParam;
+import javax.imageio.ImageWriter;
+import javax.imageio.stream.ImageOutputStream;
+import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.UUID; // 如果你有真实的Token生成工具类，替换掉这个
 import java.util.concurrent.TimeUnit;
 
@@ -26,7 +39,7 @@ import java.util.concurrent.TimeUnit;
  */
 @Slf4j
 @RestController
-@RequestMapping("/v1/auth")
+@RequestMapping("/v1")
 public class UserController {
 
     @Autowired
@@ -42,12 +55,18 @@ public class UserController {
     @Value("${wx.miniapp.secret:}")
     private String wxSecret;
 
+    @Value("${upload.path:./data/upload/}")
+    private String uploadPath;
+
+    @Value("${upload.baseUrl:http://49.233.32.212:8091/api/upload/}")
+    private String uploadBaseUrl;
+
     /**
      * 用户登录/注册接口
      * @param request 包含微信 code
      * @return Result<LoginResponse> 包含 token 和用户信息
      */
-    @PostMapping("/login")
+    @PostMapping("/auth/login")
     public Result<LoginResponse> login(@RequestBody LoginRequest request) {
         String code = request.getCode();
 
@@ -107,43 +126,181 @@ public class UserController {
         }
     }
 
-
     /**
      * 获得用户信息
-     * @param token
-     * @return
+     * @param token 授权令牌
+     * @return Result<GetResponse> 用户信息
      */
-    @GetMapping("/user")
-    public Result<GetResponse> get(@RequestHeader(value = "Authorization", required = false) String token/* TODO: 前端需要返回token */){
-        /**
-         * Redis 记录(token, UserId) 这对键值对
-         * 前端返回 token 后 Redis 会提供对应的UserId
-         */
-        String redisKey = AUTH_TOKEN_PREFIX + token;
-        log.info("🔍 正在从 Redis 查询 Key: [{}]", redisKey); // 这一行能救命，让你看清到底查的是啥
-        String userId = redisTemplate.opsForValue().get(redisKey);        if (token == null) {
-            // TODO：前端应该有默认用户设置
-            return Result.unLogin();
+    @GetMapping("/auth/user")
+    public Result<GetResponse> get(@RequestHeader(value = "Authorization") String token) {
+        try {
+            // 1. 获取当前用户 ID
+            String redisKey = AUTH_TOKEN_PREFIX + token;
+            String userId = redisTemplate.opsForValue().get(redisKey);
+            if (!StringUtils.hasText(userId)) {
+                return Result.unLogin();
+            }
+
+            // 2. 查询用户信息
+            UserVO userVO = userService.get(userId);
+            if (userVO == null) {
+                return Result.fail(40001, "用户不存在");
+            }
+
+            // 3. 转换并返回
+            UserDTO userDTO = UserDTO.builder()
+                    .userId(userVO.getUserId())
+                    .displayName(userVO.getDisplayName())
+                    .avatarUrl(userVO.getAvatarUrl())
+                    .phone(userVO.getPhone())
+                    .wechatId(userVO.getWechatId())
+                    .verified(userVO.isVerified())
+                    .build();
+
+            GetResponse response = GetResponse.builder()
+                    .userDTO(userDTO)
+                    .build();
+
+            return Result.success(response);
+        } catch (Exception e) {
+            log.error("获取用户信息失败", e);
+            return Result.fail(40001, "获取失败: " + e.getMessage());
         }
-
-        UserVO userVO = userService.get(userId);
-
-        System.out.println("3. [Controller层] 准备转换的 VO 名字: " + userVO.getDisplayName());
-
-        UserDTO userDTO = UserDTO.builder()
-                .userId(userVO.getUserId())
-                .displayName(userVO.getDisplayName())
-                .avatarUrl(userVO.getAvatarUrl())
-                .phone(userVO.getPhone())
-                .wechatId(userVO.getWechatId())
-                .verified(userVO.isVerified())
-                .build();
-
-        GetResponse response = GetResponse.builder()
-                .userDTO(userDTO)
-                .build();
-
-        return Result.success(response);
     }
 
+    /**
+     * 更新当前登录用户信息
+     * @param token 授权令牌
+     * @param request 更新请求
+     * @return Result<UserDTO> 更新后的用户信息
+     */
+    @PutMapping("/auth/user")
+    public Result<UserDTO> update(@RequestHeader(value = "Authorization") String token, @RequestBody UserUpdateRequest request) {
+        try {
+            // 1. 获取当前用户 ID
+            String redisKey = AUTH_TOKEN_PREFIX + token;
+            String userId = redisTemplate.opsForValue().get(redisKey);
+            if (!StringUtils.hasText(userId)) {
+                return Result.unLogin();
+            }
+
+            // 2. 转换 DTO 为 VO (增加清洗逻辑)
+            UserVO userVO = UserVO.builder()
+                    .displayName(request.getDisplayName())
+                    .avatarUrl(request.getCleanAvatarUrl()) // 使用清洗后的 URL
+                    .wechatId(request.getWechatId())
+                    .phone(request.getPhone())
+                    .build();
+
+            log.info("准备更新用户 VO: {}", userVO);
+
+            // 3. 执行更新
+            UserVO updatedUserVO = userService.update(userId, userVO);
+
+            // 4. 转换结果为 DTO
+            UserDTO userDTO = UserDTO.builder()
+                    .userId(updatedUserVO.getUserId())
+                    .displayName(updatedUserVO.getDisplayName())
+                    .avatarUrl(updatedUserVO.getAvatarUrl())
+                    .phone(updatedUserVO.getPhone())
+                    .wechatId(updatedUserVO.getWechatId())
+                    .verified(updatedUserVO.isVerified())
+                    .build();
+
+            return Result.success(userDTO);
+        } catch (Exception e) {
+            log.error("更新用户信息失败", e);
+            return Result.fail(40001, "更新失败: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 上传头像接口 (包含激进压缩逻辑 + 自动存库)
+     * @param token 授权令牌
+     * @param file 图片文件
+     * @return Result<UserDTO> 返回更新后的完整用户信息
+     */
+    @PostMapping("/auth/upload")
+    public Result<UserDTO> upload(@RequestHeader(value = "Authorization") String token, @RequestParam("file") MultipartFile file) {
+        try {
+            // 1. 权限校验
+            String redisKey = AUTH_TOKEN_PREFIX + token;
+            String userId = redisTemplate.opsForValue().get(redisKey);
+            if (!StringUtils.hasText(userId)) {
+                return Result.unLogin();
+            }
+
+            if (file.isEmpty()) {
+                return Result.fail(40001, "文件不能为空");
+            }
+
+            // 2. 确保目录存在
+            File dir = new File(uploadPath);
+            if (!dir.exists()) {
+                dir.mkdirs();
+            }
+
+            // 3. 生成文件名并压缩保存 (保持之前的激进压缩逻辑)
+            String fileName = UUID.randomUUID().toString().replace("-", "") + ".jpg";
+            File destFile = new File(dir, fileName);
+            BufferedImage originalImage = ImageIO.read(file.getInputStream());
+            
+            int targetWidth = 200;
+            int targetHeight = 200;
+            int width = originalImage.getWidth();
+            int height = originalImage.getHeight();
+            if (width > height) {
+                targetHeight = (int) (height * (targetWidth / (double) width));
+            } else {
+                targetWidth = (int) (width * (targetHeight / (double) height));
+            }
+
+            BufferedImage thumbnail = new BufferedImage(targetWidth, targetHeight, BufferedImage.TYPE_INT_RGB);
+            Graphics2D g2d = thumbnail.createGraphics();
+            g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+            g2d.drawImage(originalImage, 0, 0, targetWidth, targetHeight, null);
+            g2d.dispose();
+
+            Iterator<ImageWriter> writers = ImageIO.getImageWritersByFormatName("jpg");
+            if (!writers.hasNext()) throw new RuntimeException("No writers for jpg");
+            ImageWriter writer = writers.next();
+            try (FileOutputStream fos = new FileOutputStream(destFile);
+                 ImageOutputStream ios = ImageIO.createImageOutputStream(fos)) {
+                writer.setOutput(ios);
+                ImageWriteParam param = writer.getDefaultWriteParam();
+                if (param.canWriteCompressed()) {
+                    param.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
+                    param.setCompressionQuality(0.6f);
+                }
+                writer.write(null, new IIOImage(thumbnail, null, null), param);
+            } finally {
+                writer.dispose();
+            }
+
+            // 4. 【核心变动】自动更新数据库
+            String newAvatarUrl = uploadBaseUrl + fileName;
+            UserVO updateVO = UserVO.builder()
+                    .avatarUrl(newAvatarUrl)
+                    .build();
+            
+            // 执行 Service 层存库
+            UserVO updatedUserVO = userService.update(userId, updateVO);
+            log.info("用户 {} 头像上传并自动存库成功: {}", userId, newAvatarUrl);
+
+            // 5. 直接返回更新后的完整用户对象
+            UserDTO userDTO = UserDTO.builder()
+                    .userId(updatedUserVO.getUserId())
+                    .displayName(updatedUserVO.getDisplayName())
+                    .avatarUrl(updatedUserVO.getAvatarUrl())
+                    .phone(updatedUserVO.getPhone())
+                    .wechatId(updatedUserVO.getWechatId())
+                    .verified(updatedUserVO.isVerified())
+                    .build();
+
+            return Result.success(userDTO);
+        } catch (Exception e) {
+            log.error("上传并更新头像失败", e);
+            return Result.fail(40001, "上传失败: " + e.getMessage());
+        }
+    }
 }

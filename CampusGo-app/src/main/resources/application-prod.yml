@@ -14,13 +14,10 @@ thread:
 
 # 数据库配置
 spring:
-  data:
-    redis:
-      host: redis
-      port: 6379
   datasource:
     username: ${SPRING_DATASOURCE_USERNAME:root}
     password: ${SPRING_DATASOURCE_PASSWORD:123456}
+    # 生产环境使用服务器真实 IP
     url: jdbc:mysql://mysql:3306/xfg_frame_archetype?useUnicode=true&characterEncoding=utf8&autoReconnect=true&zeroDateTimeBehavior=convertToNull&serverTimezone=UTC&useSSL=false
     driver-class-name: com.mysql.cj.jdbc.Driver
     type: com.zaxxer.hikari.HikariDataSource
@@ -33,6 +30,17 @@ spring:
       max-lifetime: 1800000
       connection-timeout: 30000
       connection-test-query: SELECT 1
+  data:
+    redis:
+      port: ${SPRING_REDIS_PORT:6379}
+      password: ${SPRING_REDIS_PASSWORD:}
+      database: 0
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+      host: redis
 
 # MyBatis 配置
 mybatis:
@@ -50,3 +58,8 @@ wx:
   miniapp:
     appid: ${WX_MINIAPP_APPID:wx8a230e54e94a1760}
     secret: ${WX_MINIAPP_SECRET:fbc48ca8abdf5487f0f71ddf1d062d4a}
+
+# 文件上传配置
+upload:
+  path: /data/upload/
+  baseUrl: http://49.233.32.212:8091/api/upload/
