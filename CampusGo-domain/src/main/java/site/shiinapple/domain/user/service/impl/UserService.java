@@ -3,6 +3,7 @@ package site.shiinapple.domain.user.service.impl;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import site.shiinapple.domain.order.adapter.repository.IOrderRepository;
 import site.shiinapple.domain.user.adapter.repository.IUserRepository;
 import site.shiinapple.domain.user.model.aggregate.User;
 import site.shiinapple.domain.user.model.valobj.UserVO;
@@ -15,28 +16,23 @@ public class UserService implements IUserService {
     @Autowired
     private IUserRepository userRepository;
 
+    @Autowired
+    private IOrderRepository orderRepository;
+
     @Override
-    public UserVO login(String code) {
+    public UserVO login(String openId) {
         // 1. 查询用户
-        User user = userRepository.findByOpenId(code);
+        User user = userRepository.findByOpenId(openId);
 
         // 2. 如果用户不存在，则创建并保存
         if (user == null) {
-            log.info("用户不存在，开始创建新用户: {}", code);
-            user = User.create(code);
+            log.info("用户不存在，开始创建新用户: {}", openId);
+            user = User.create(openId);
             userRepository.save(user);
         }
 
         // 3. 返回 UserVO
-        return UserVO.builder()
-                .userId(user.getUserId())
-                .openId(user.getOpenId())
-                .displayName(user.getDisplayName())
-                .wechatId(user.getWechatId())
-                .phone(user.getPhone())
-                .avatarUrl(user.getAvatarUrl())
-                .verified(user.isVerified())
-                .build();
+        return toVO(user);
     }
 
     @Override
@@ -45,15 +41,7 @@ public class UserService implements IUserService {
         if (user == null) {
             return null;
         }
-        return UserVO.builder()
-                .userId(user.getUserId())
-                .openId(user.getOpenId())
-                .displayName(user.getDisplayName())
-                .avatarUrl(user.getAvatarUrl())
-                .phone(user.getPhone())
-                .wechatId(user.getWechatId())
-                .verified(user.isVerified())
-                .build();
+        return toVO(user);
     }
 
     @Override
@@ -72,14 +60,30 @@ public class UserService implements IUserService {
         userRepository.save(user);
 
         // 4. 返回更新后的 UserVO
+        return toVO(user);
+    }
+
+    private UserVO toVO(User user) {
+        Integer totalTaken = orderRepository.queryTotalTaken(user.getUserId());
+        Integer monthTaken = orderRepository.queryMonthTaken(user.getUserId());
+        Integer deliveredCount = orderRepository.queryDeliveredCount(user.getUserId());
+
+        int onTimeRate = 0;
+        if (totalTaken != null && totalTaken > 0) {
+            onTimeRate = (int) Math.round((deliveredCount * 100.0) / totalTaken);
+        }
+
         return UserVO.builder()
                 .userId(user.getUserId())
                 .openId(user.getOpenId())
                 .displayName(user.getDisplayName())
-                .avatarUrl(user.getAvatarUrl())
-                .phone(user.getPhone())
                 .wechatId(user.getWechatId())
+                .phone(user.getPhone())
+                .avatarUrl(user.getAvatarUrl())
                 .verified(user.isVerified())
+                .totalTaken(totalTaken)
+                .monthTaken(monthTaken)
+                .onTimeRate(onTimeRate + "%")
                 .build();
     }
 

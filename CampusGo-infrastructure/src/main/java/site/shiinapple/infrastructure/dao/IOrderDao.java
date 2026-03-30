@@ -27,4 +27,12 @@ public interface IOrderDao {
     /** 查询总数 */
     Long queryOrderCount(@Param("type") String type);
 
+    /** 查询用户累计接单数 */
+    Integer queryTotalTaken(@Param("takerUserId") String takerUserId);
+
+    /** 查询用户本月接单数 */
+    Integer queryMonthTaken(@Param("takerUserId") String takerUserId);
+
+    /** 查询用户已送达订单数 */
+    Integer queryDeliveredCount(@Param("takerUserId") String takerUserId);
 }

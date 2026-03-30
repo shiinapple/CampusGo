@@ -60,6 +60,21 @@ public class OrderRepository implements IOrderRepository {
         }
     }
 
+    @Override
+    public Integer queryTotalTaken(String userId) {
+        return orderDao.queryTotalTaken(userId);
+    }
+
+    @Override
+    public Integer queryMonthTaken(String userId) {
+        return orderDao.queryMonthTaken(userId);
+    }
+
+    @Override
+    public Integer queryDeliveredCount(String userId) {
+        return orderDao.queryDeliveredCount(userId);
+    }
+
     private Order toAggregate(OrderPO po) {
         return Order.builder()
                 .orderId(po.getOrderId())

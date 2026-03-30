@@ -69,4 +69,18 @@
         </where>
     </select>
 
+    <select id="queryTotalTaken" parameterType="java.lang.String" resultType="java.lang.Integer">
+        SELECT COUNT(1) FROM `order` WHERE taker_user_id = #{takerUserId} AND status != 'cancelled'
+    </select>
+
+    <select id="queryMonthTaken" parameterType="java.lang.String" resultType="java.lang.Integer">
+        SELECT COUNT(1) FROM `order` 
+        WHERE taker_user_id = #{takerUserId} 
+          AND status != 'cancelled'
+          AND create_time >= DATE_FORMAT(CURDATE(), '%Y-%m-01')
+    </select>
+
+    <select id="queryDeliveredCount" parameterType="java.lang.String" resultType="java.lang.Integer">
+        SELECT COUNT(1) FROM `order` WHERE taker_user_id = #{takerUserId} AND status = 'delivered'
+    </select>
 </mapper>

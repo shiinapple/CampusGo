@@ -107,6 +107,9 @@ public class UserController {
                     .phone(userVO.getPhone())
                     .wechatId(userVO.getWechatId())
                     .verified(userVO.isVerified())
+                    .monthTaken(userVO.getMonthTaken())
+                    .totalTaken(userVO.getTotalTaken())
+                    .onTimeRate(userVO.getOnTimeRate())
                     .build();
 
             String token = "jwt_" + UUID.randomUUID().toString().replace("-", "");
@@ -129,10 +132,10 @@ public class UserController {
     /**
      * 获得用户信息
      * @param token 授权令牌
-     * @return Result<GetResponse> 用户信息
+     * @return Result<UserDTO> 用户信息
      */
     @GetMapping("/auth/user")
-    public Result<GetResponse> get(@RequestHeader(value = "Authorization") String token) {
+    public Result<UserDTO> get(@RequestHeader(value = "Authorization") String token) {
         try {
             // 1. 获取当前用户 ID
             String redisKey = AUTH_TOKEN_PREFIX + token;
@@ -155,13 +158,12 @@ public class UserController {
                     .phone(userVO.getPhone())
                     .wechatId(userVO.getWechatId())
                     .verified(userVO.isVerified())
+                    .monthTaken(userVO.getMonthTaken())
+                    .totalTaken(userVO.getTotalTaken())
+                    .onTimeRate(userVO.getOnTimeRate())
                     .build();
 
-            GetResponse response = GetResponse.builder()
-                    .userDTO(userDTO)
-                    .build();
-
-            return Result.success(response);
+            return Result.success(userDTO);
         } catch (Exception e) {
             log.error("获取用户信息失败", e);
             return Result.fail(40001, "获取失败: " + e.getMessage());
@@ -205,6 +207,9 @@ public class UserController {
                     .phone(updatedUserVO.getPhone())
                     .wechatId(updatedUserVO.getWechatId())
                     .verified(updatedUserVO.isVerified())
+                    .monthTaken(updatedUserVO.getMonthTaken())
+                    .totalTaken(updatedUserVO.getTotalTaken())
+                    .onTimeRate(updatedUserVO.getOnTimeRate())
                     .build();
 
             return Result.success(userDTO);
@@ -295,6 +300,9 @@ public class UserController {
                     .phone(updatedUserVO.getPhone())
                     .wechatId(updatedUserVO.getWechatId())
                     .verified(updatedUserVO.isVerified())
+                    .monthTaken(updatedUserVO.getMonthTaken())
+                    .totalTaken(updatedUserVO.getTotalTaken())
+                    .onTimeRate(updatedUserVO.getOnTimeRate())
                     .build();
 
             return Result.success(userDTO);

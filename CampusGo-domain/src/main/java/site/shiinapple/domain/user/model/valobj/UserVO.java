@@ -31,4 +31,10 @@ public class UserVO {
 
     private boolean verified;
 
+    private Integer monthTaken;
+
+    private Integer totalTaken;
+
+    private String onTimeRate;
+
 }

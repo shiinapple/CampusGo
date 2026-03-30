@@ -44,6 +44,12 @@ public class UserUpdateRequest implements Serializable {
     private String avatarUrl;
 
     /**
+     * 性别
+     */
+    @JsonProperty("gender")
+    private Integer gender;
+
+    /**
      * 清洗 URL 中的杂质（如反引号、空格等）
      */
     public String getCleanAvatarUrl() {

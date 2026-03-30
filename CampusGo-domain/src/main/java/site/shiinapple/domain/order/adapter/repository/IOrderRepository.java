@@ -29,4 +29,18 @@ public interface IOrderRepository {
      */
     void save(Order order);
 
+    /**
+     * 查询用户接单总数
+     */
+    Integer queryTotalTaken(String userId);
+
+    /**
+     * 查询用户本月接单数
+     */
+    Integer queryMonthTaken(String userId);
+
+    /**
+     * 查询用户已送达订单数
+     */
+    Integer queryDeliveredCount(String userId);
 }

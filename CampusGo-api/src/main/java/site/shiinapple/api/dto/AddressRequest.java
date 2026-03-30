@@ -20,9 +20,11 @@ public class AddressRequest implements Serializable {
     private static final long serialVersionUID = 1L;
 
     /** 地址名称 */
+    @JsonProperty("name")
     private String name;
 
     /** 详细地址 */
+    @JsonProperty("detail")
     private String detail;
 
     /** 是否默认 */

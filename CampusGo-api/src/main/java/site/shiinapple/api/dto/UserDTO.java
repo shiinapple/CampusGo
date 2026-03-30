@@ -14,11 +14,31 @@ import java.io.Serializable;
 @NoArgsConstructor
 public class UserDTO implements Serializable {
     private static final long serialVersionUID = 1L;
+    
     @JsonProperty("id")
     private String userId;
+    
+    @JsonProperty("displayName")
     private String displayName;
+    
+    @JsonProperty("avatarUrl")
     private String avatarUrl;
+    
+    @JsonProperty("phone")
     private String phone;
+    
+    @JsonProperty("wechatId")
     private String wechatId;
+    
+    @JsonProperty("verified")
     private boolean verified;
+
+    @JsonProperty("monthTaken")
+    private Integer monthTaken;
+
+    @JsonProperty("totalTaken")
+    private Integer totalTaken;
+
+    @JsonProperty("onTimeRate")
+    private String onTimeRate;
 }

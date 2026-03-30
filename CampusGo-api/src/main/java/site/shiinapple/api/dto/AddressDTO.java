@@ -24,9 +24,11 @@ public class AddressDTO implements Serializable {
     private String addressId;
 
     /** 地址名称 */
+    @JsonProperty("name")
     private String name;
 
     /** 详细地址 */
+    @JsonProperty("detail")
     private String detail;
 
     /** 是否默认 */
